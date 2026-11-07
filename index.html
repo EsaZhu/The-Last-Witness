@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Last Witness — A Digital Memorial</title>
+  <meta name="description" content="What happens when the voice for the dead becomes the dead? A digital memorial to Palestinian journalists.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <!-- Tailwind (CDN) + theme -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#171717',      // page background
+            panel: '#35302a',    // reflection boxes
+            gold: '#f6dc9a',     // small labels
+            cream: '#fff0d0',    // buttons / soft text
+            coral: '#ff5252'     // "frame goes dark" accent
+          },
+          fontFamily: {
+            serif: ['Lora', 'Georgia', 'serif'],
+            sans: ['DM Sans', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background:#171717; color:#ececec; font-family:'DM Sans',system-ui,sans-serif; }
+    section[id] { scroll-margin-top: 0; }
+
+    /* Dotted divider with centre tick, used at top of each chapter */
+    .divider { height:8px; background-image:radial-gradient(circle,#555 1px,transparent 1.5px); background-size:8px 8px; background-repeat:repeat-x; background-position:center; position:relative; }
+    .divider::after { content:''; position:absolute; left:50%; top:-8px; width:6px; height:24px; background:#555; transform:translateX(-50%); }
+    .divider.hot::after { background:#ff5252; }
+
+    .label  { letter-spacing:.18em; text-transform:uppercase; font-size:.75rem; color:#f6dc9a; }
+    .pill   { border:1px solid #ddd; border-radius:999px; padding:.35rem 1.25rem; font-size:.85rem; white-space:nowrap; }
+    .btn    { display:inline-block; background:#fff0d0; color:#171717; font-weight:700; font-size:.9rem; padding:.9rem 1.5rem; border-radius:.5rem; transition:transform .15s, background .15s; }
+    .btn:hover { background:#fff; transform:translateY(-1px); }
+    .btn-ghost { display:inline-block; border:1px solid #f6dc9a; color:#fff; font-size:.95rem; padding:.9rem 1.5rem; border-radius:.5rem; transition:background .15s; }
+    .btn-ghost:hover { background:rgba(246,220,154,.12); }
+    .box { background:#35302a; border:1px solid rgba(255,255,255,.05); padding:1.25rem 1.5rem; }
+    .box p { color:#fff0d0; line-height:1.6; }
+
+    /* Media slot: placeholder sits behind the <img>/<video>; if the file is missing the placeholder stays visible */
+    .media { position:relative; overflow:hidden; background:linear-gradient(135deg,#2a2a2a,#1f1f1f); border:1px solid #2e2e2e; }
+    .media > img, .media > video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .media .ph { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:.75rem; font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:#777; }
+    .media.ready .ph { display:none; }
+    .vidbox::after { content:'▶  hover to play'; position:absolute; left:.6rem; bottom:.6rem; font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; background:rgba(0,0,0,.65); padding:.25rem .5rem; border-radius:.25rem; transition:opacity .2s; pointer-events:none; }
+    .vidbox.playing::after { opacity:0; }
+    .hovercard video { opacity:0; transition:opacity .3s; }
+    .hovercard.started video { opacity:1; }   /* once played, stay visible: paused video holds its last frame */
+
+    /* Two-column timeline */
+    .tl { border-left:2px dotted #555; margin-left:.4rem; padding-left:0; }
+    .tl li { position:relative; padding:0 0 1.75rem 1.5rem; }
+    .tl .dot { position:absolute; left:-.55rem; top:.2rem; width:.9rem; height:.9rem; border-radius:50%; background:#f6dc9a; }
+    .tl li.hot .dot { background:#ff5252; }
+    .tl .tl-date { font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#f6dc9a; }
+    .tl li.hot .tl-date { color:#ff5252; }
+    .tl li p:last-child { color:#ddd; font-size:.92rem; line-height:1.5; }
+
+    /* Reveal on scroll */
+    .reveal { opacity:0; transform:translateY(16px); transition:opacity .7s ease, transform .7s ease; }
+    .reveal.in { opacity:1; transform:none; }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity:1; transform:none; transition:none; } html { scroll-behavior:auto !important; } }
+
+    /* Click-to-reflect cards */
+    .reflect-card { cursor:pointer; border:1px solid #f6dc9a; border-radius:2rem; min-height:16rem; padding:1.5rem; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; transition:background .2s; }
+    .reflect-card:hover { background:rgba(246,220,154,.06); }
+    .reflect-card .answer { display:none; font-size:1.25rem; line-height:1.4; }
+    .reflect-card.open .answer { display:block; }
+    .reflect-card.open .empty { display:none; }
+
+
+    /* Flip cards (Archive/01): front = prompt, back = explanation. Both faces share one grid cell so the card is as tall as the taller face. */
+    .flip { perspective:1200px; cursor:pointer; outline:none; }
+    .flip-inner { display:grid; transition:transform .7s cubic-bezier(.4,.2,.2,1); transform-style:preserve-3d; }
+    .flip.flipped .flip-inner { transform:rotateY(180deg); }
+    .flip-face { grid-area:1/1; backface-visibility:hidden; -webkit-backface-visibility:hidden; border:1px solid rgba(246,220,154,.6); border-radius:2rem; min-height:18rem; padding:1.75rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.25rem; text-align:center; }
+    .flip-front:hover, .flip:focus-visible .flip-front { background:rgba(246,220,154,.06); }
+    .flip-back { transform:rotateY(180deg); background:#35302a; color:#fff0d0; line-height:1.6; font-size:.95rem; }
+    .flip-hint { font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; color:#f6dc9a; opacity:.75; }
+    @media (prefers-reduced-motion: reduce) { .flip-inner { transition:none; } }
+
+    /* Lightbox */
+    #lightbox { position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.9); align-items:center; justify-content:center; padding:1rem; cursor:zoom-out; }
+    #lightbox img { max-width:95vw; max-height:92vh; object-fit:contain; cursor:default; }
+    #lightbox.open { display:flex !important; }
+    .media > img { cursor:zoom-in; }
+    @media (hover:hover) { .hovercard { cursor:zoom-in; } }
+
+    /* Final reflection lock */
+    #final.locked .final-body { filter:blur(10px); opacity:.35; pointer-events:none; user-select:none; }
+    #final .lock-msg { display:none; }
+    #final.locked .lock-msg { display:flex; }
+  </style>
+</head>
+
+<body class="antialiased">
+
+  <!-- Floating progress pill: always shows journeys completed and jumps back to the witness picker -->
+  <a href="#witnesses" data-goto="witnesses" class="fixed bottom-4 right-4 z-50 pill bg-black/70 backdrop-blur text-gold hover:text-white">
+    <span class="js-count">0</span> / 5 journeys · choose a witness
+  </a>
+
+  <!-- ============================================================
+       HERO
+       ============================================================ -->
+  <header id="hero" class="relative min-h-screen flex flex-col justify-center px-6 md:px-16 lg:px-24 overflow-hidden">
+    <div class="absolute inset-0 opacity-[.06]" style="background:radial-gradient(circle at 70% 30%,#fff 0,transparent 55%)"></div>
+    <p class="label !text-coral relative">A Digital Memorial</p>
+    <h1 class="relative font-serif text-6xl md:text-8xl leading-[1.05] mt-4">The Last<br><span class="italic text-coral">Witness.</span></h1>
+    <p class="relative mt-6 text-lg text-neutral-300 max-w-xl">What happens when the voice for the dead becomes the dead?</p>
+    <div class="relative mt-10">
+      <button data-goto="witnesses" class="pill !px-8 !py-3 hover:bg-white/10 transition tracking-widest text-xs uppercase">Enter the exhibition</button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       01 / THE PEOPLE  (witness picker; cards are rendered by JS)
+       ============================================================ -->
+  <section id="witnesses" class="px-6 md:px-16 lg:px-24 py-20 border-t border-white/10">
+    <div class="flex items-center justify-between">
+      <p class="label !text-coral">01 / The People</p>
+      <p class="label !text-coral">Select a witness</p>
+    </div>
+    <h2 class="font-serif text-4xl md:text-5xl mt-6">Whose story will you follow?</h2>
+    <p class="text-neutral-300 mt-3 max-w-2xl">Choose a journalist, follow their story and return to discover the others. Complete all five to unlock the final reflection.</p>
+    <div id="cards" class="mt-10 flex flex-wrap justify-center gap-4"></div>
+  </section>
+
+  <!-- Witness journeys are injected here by script (one block per witness) -->
+  <main id="journeys"></main>
+
+  <!-- ============================================================
+       THE COLLECTIVE AFTERMATH
+       ============================================================ -->
+  <section id="aftermath" class="border-t border-white/10 px-6 md:px-16 lg:px-24 py-24 text-center">
+    <p class="label">The Collective Aftermath</p>
+    <h2 class="font-serif text-4xl md:text-6xl mt-6 leading-tight">Five witnesses. Different stories.<br>A shared absence.</h2>
+    <div id="strip" class="mt-12 grid grid-cols-2 md:grid-cols-5 gap-4 max-w-6xl mx-auto"></div>
+    <p class="mt-10 inline-block border border-gold/60 rounded-xl px-6 py-3 max-w-2xl">Four journalists lost their lives. One survived detention and reported lasting harm. Each experienced an interruption to their ability to document the lives of others.</p>
+  </section>
+
+  <section id="aftermath-choice" class="px-6 md:px-16 lg:px-24 py-24 text-center border-t border-white/10">
+    <p class="label">The Collective Aftermath</p>
+    <h2 class="font-serif text-4xl md:text-5xl mt-6 max-w-3xl mx-auto leading-tight">But what happens beyond the individual witness?</h2>
+    <div class="mt-12 max-w-md mx-auto flex flex-col gap-6">
+      <button data-goto="archive-1" class="btn !py-6">LOST</button>
+      <button data-goto="archive-2" class="btn !py-6">PRESERVED</button>
+      <button data-goto="archive-3" class="btn !py-6">UNRECORDED</button>
+    </div>
+  </section>
+
+  <!-- ARCHIVE 01: what was lost -->
+  <section id="archive-1" class="px-6 md:px-16 lg:px-24 py-24 border-t border-white/10">
+    <div class="flex justify-between"><p class="label">Archive/01</p><p class="text-sm font-bold">THE COLLECTIVE AFTERMATH</p></div>
+    <h2 class="font-serif text-4xl md:text-5xl mt-4">What was lost?</h2>
+    <div class="grid md:grid-cols-3 gap-8 mt-12">
+      <div class="flip" role="button" tabindex="0" aria-pressed="false" aria-label="Local Connections: click to reveal the answer">
+        <div class="flip-inner">
+          <div class="flip-face flip-front"><h3 class="tracking-wide">LOCAL CONNECTIONS</h3><p>What can no longer continue?</p><span class="flip-hint">Click to flip ↻</span></div>
+          <div class="flip-face flip-back"><p>Roshdi Sarraj helped international journalists report from Gaza through his work with Ain Media. His death removed an experienced local collaborator whose knowledge and relationships supported reporting beyond his own work.</p><span class="flip-hint">Click to flip back ↻</span></div>
+        </div>
+      </div>
+      <div class="flip" role="button" tabindex="0" aria-pressed="false" aria-label="Perspectives: click to reveal the answer">
+        <div class="flip-inner">
+          <div class="flip-face flip-front"><h3 class="tracking-wide">PERSPECTIVES</h3><p>What remains accessible?</p><span class="flip-hint">Click to flip ↻</span></div>
+          <div class="flip-face flip-back"><p>Fatma Hassona documented Palestinian culture and everyday life, while Saleh Al-Jafarawi shared firsthand experiences of conflict through social media. Their deaths ended their ability to continue contributing these distinctive perspectives.</p><span class="flip-hint">Click to flip back ↻</span></div>
+        </div>
+      </div>
+      <div class="flip" role="button" tabindex="0" aria-pressed="false" aria-label="Continuity: click to reveal the answer">
+        <div class="flip-inner">
+          <div class="flip-face flip-front"><h3 class="tracking-wide">CONTINUITY</h3><p>What may never be known?</p><span class="flip-hint">Click to flip ↻</span></div>
+          <div class="flip-face flip-back"><p>Mariam Abu Dagga’s death interrupted her involvement in reporting on overcrowding at Nasser Hospital. Shadi Abu Sido’s detention prevented him from documenting events during his imprisonment, while reported lasting injuries affected his ability to return to journalism.</p><span class="flip-hint">Click to flip back ↻</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-12 text-center"><button data-goto="archive-2" class="btn">Not every story disappears →</button></div>
+  </section>
+
+  <!-- ARCHIVE 02: what was preserved -->
+  <section id="archive-2" class="px-6 md:px-16 lg:px-24 py-24 border-t border-white/10">
+    <div class="flex justify-between"><p class="label">Archive/02</p><p class="text-sm font-bold">THE COLLECTIVE AFTERMATH</p></div>
+    <h2 class="font-serif text-4xl md:text-5xl mt-4">Not every story disappears.</h2>
+    <div class="grid md:grid-cols-2 gap-10 mt-12">
+      <figure>
+        <div class="media rounded-[2rem] aspect-[3/2]"><span class="ph">Photo: Shuruq Al-Ayla (assets/images/aftermath-shuruq.jpg)</span><img src="assets/images/aftermath-shuruq.jpg" alt="Shuruq Al-Ayla wearing a press vest" loading="lazy" onerror="this.remove()"></div>
+        <figcaption class="mt-5 border border-gold/60 rounded-3xl px-6 py-4 text-center"><strong class="block mb-1">THE WORK CONTINUES</strong>After Roshdi Sarraj’s death, his wife Shuruq Al-Ayla took over Ain Media and continued documenting the war and displacement of Palestinian communities.</figcaption>
+      </figure>
+      <figure>
+        <div class="media rounded-[2rem] aspect-[3/2]"><span class="ph">Photo: Fatma Hassona (assets/images/aftermath-fatma.jpg)</span><img src="assets/images/aftermath-fatma.jpg" alt="Fatma Hassona smiling on a video call" loading="lazy" onerror="this.remove()"></div>
+        <figcaption class="mt-5 border border-gold/60 rounded-3xl px-6 py-4 text-center"><strong class="block mb-1">THE VOICE REMAINS</strong>Fatma Hassona’s photographs and recorded conversations continued reaching audiences through her published photo diary and the documentary <em>Put Your Soul on Your Hand and Walk</em>.</figcaption>
+      </figure>
+    </div>
+    <div class="mt-12 text-center"><button data-goto="archive-3" class="btn">What was never captured? →</button></div>
+  </section>
+
+  <!-- ARCHIVE 03: what was never captured -->
+  <section id="archive-3" class="px-6 md:px-16 lg:px-24 py-24 border-t border-white/10">
+    <div class="flex justify-between"><p class="label">Archive/03</p><p class="text-sm font-bold">THE COLLECTIVE AFTERMATH</p></div>
+    <h2 class="font-serif text-4xl md:text-5xl mt-4">What was never captured?</h2>
+    <div class="mt-6 space-y-4 max-w-4xl text-lg text-neutral-200">
+      <p>We can identify the reporting that ended when journalists were killed or prevented from working.</p>
+      <p>But we cannot know every photograph that might have been taken, every interview that might have happened or every story that might have reached the world.</p>
+      <p>The absence of a journalist raises questions about how future events will be documented and whose experiences may receive less attention.</p>
+    </div>
+    <!-- Click a card to reveal its reflection question -->
+    <div class="grid md:grid-cols-3 gap-6 mt-12">
+      <button class="reflect-card" aria-expanded="false"><div class="empty"><svg class="mx-auto mb-4" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M5 5l14 14"/><rect x="7" y="9" width="10" height="7" rx="1.5"/></svg>NO IMAGE AVAILABLE<br><span class="text-neutral-400 text-sm">click to reflect</span></div><p class="answer">Which stories might have never reached us?</p></button>
+      <button class="reflect-card" aria-expanded="false"><div class="empty"><svg class="mx-auto mb-4" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M5 5l14 14"/><rect x="7" y="9" width="10" height="7" rx="1.5"/></svg>NO IMAGE AVAILABLE<br><span class="text-neutral-400 text-sm">click to reflect</span></div><p class="answer">Whose lives may receive less attention?</p></button>
+      <button class="reflect-card" aria-expanded="false"><div class="empty"><svg class="mx-auto mb-4" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M5 5l14 14"/><rect x="7" y="9" width="10" height="7" rx="1.5"/></svg>NO IMAGE AVAILABLE<br><span class="text-neutral-400 text-sm">click to reflect</span></div><p class="answer">How will future generations remember these lives?</p></button>
+    </div>
+    <p class="mt-8 text-neutral-400 max-w-2xl">Some gaps cannot be measured. We cannot know every image that might have been taken or every conversation that might have been recorded.</p>
+    <div class="mt-10 text-center"><button data-goto="final" class="btn">Who remains to tell the stories of the living? →</button></div>
+  </section>
+
+  <!-- FINAL REFLECTION (locked until all five journeys are completed; set GATE_FINAL=false in the script to disable) -->
+  <section id="final" class="locked relative px-6 md:px-16 lg:px-24 py-28 border-t border-white/10 min-h-[70vh]">
+    <div class="lock-msg absolute inset-0 z-10 items-center justify-center text-center p-6">
+      <div class="bg-black/80 border border-gold/50 rounded-2xl px-8 py-6 max-w-md">
+        <p class="label mb-2">Final reflection locked</p>
+        <p>Complete all five witness journeys to unlock this page. <span class="js-remaining font-bold">5</span> remaining.</p>
+        <button data-goto="witnesses" class="btn mt-5">Choose a witness</button>
+      </div>
+    </div>
+    <div class="final-body max-w-4xl">
+      <h2 class="font-serif text-4xl md:text-5xl leading-tight">Who remains to tell the stories of the living?</h2>
+      <div class="mt-8 space-y-6 text-lg text-neutral-200">
+        <p>The cameras may fall silent, but the suffering they once documented does not.</p>
+        <p>Behind every unfinished report, every empty frame and every interrupted timeline are lives that continue beyond the absence of their witnesses.</p>
+        <p>Yet silence does not always mean that stories have disappeared. Some survive through photographs, testimonies and the voices of those who continue to bear witness.</p>
+        <p>But what of the stories that have yet to be told? The faces that have yet to be seen? The lives that may never become part of our collective memory?</p>
+        <p class="font-bold text-2xl text-white">When the witnesses are gone, who will ensure that the living are not forgotten?</p>
+      </div>
+      <div class="mt-12"><button data-goto="hero" class="btn-ghost">Return to the beginning ↑</button></div>
+    </div>
+  </section>
+
+<!-- Lightbox: click an image to see it uncropped; click anywhere outside the image (or press Esc) to close -->
+<div id="lightbox" class="fixed inset-0 z-[100] bg-black/90 items-center justify-center p-4 cursor-zoom-out" style="display:none" role="dialog" aria-modal="true" aria-label="Enlarged image">
+  <img id="lightbox-img" alt="" class="max-w-[95vw] max-h-[92vh] object-contain cursor-default select-none">
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG
+   ===================================================================== */
+const GATE_FINAL = true;           // false = final reflection is always visible
+const ASSETS_IMG = 'assets/images/';
+const ASSETS_VID = 'assets/videos/';
+
+// Which part of each card picture stays visible when it is cropped (CSS object-position).
+// Values: 'center', 'center top', 'center 20%', 'left center', '50% 30%' ... (x y). Edit freely.
+const PORTRAIT_POS = { roshdi:'center', fatma:'center top', saleh:'center', mariam:'center', shadi:'center' };
+
+/* =====================================================================
+   CONTENT
+   Each witness has an ordered list of sections. A section's main button
+   automatically scrolls to the NEXT section; the last one scrolls to the
+   "witness remembered" block (#<id>-done).
+   Section ids: <id>-s0, <id>-s1, ...   Done block: <id>-done
+   ===================================================================== */
+const WITNESSES = [
+  {
+    id: 'roshdi', name: 'Roshdi Sarraj', short: 'Roshdi Sarraj', role: 'Filmmaker & Photojournalist',
+    focus: 'Everyday life, displacement & international reporting', archive: 'Archive 01',
+    sections: [
+      { type: 'profile', years: '2012', chapter: 1, paras: [
+          `Roshdi Sarraj began working as a Palestinian photojournalist and filmmaker in 2012 and co-founded Ain Media, a Gaza-based media company. He also worked as a photographer and local producer for international organisations and news outlets, helping visiting journalists understand and report on communities in Gaza.`,
+          `His films documented displacement and bombardment alongside culture, ambition and everyday life. Through projects such as <em>Between Two Crossings</em> and <em>Bank of Targets</em>, he explored how restrictions and military attacks shaped individual lives.` ],
+        focus: `He filmed everyday life, displacement, and Palestinian culture, not only destruction, but the people living through it.`,
+        why: `Roshdi’s significance was not limited to the images he personally recorded. As a local collaborator, he connected international media to people, places and experiences that outsiders might otherwise struggle to reach.`,
+        btn: 'Follow their work' },
+      { type: 'gallery', kicker: 'The stories they made visible', title: 'What did Roshdi make visible?', years: '2018 – 2022', chapter: 2, layout: 'cols',
+        intro: `Roshdi Sarraj and Ain Media made films showing Palestinian lives and struggles. Rather than only documenting Palestinian suffering, he also wanted the world to recognise Palestinian life, culture, and humanity even during the years of Israeli siege.`,
+        frames: [
+          { label: 'Archive Frame 01', caption: `A woman who is part of Gaza’s boxing gym for women, which aims to empower women in sports.` },
+          { label: 'Archive Frame 02', caption: `A woman preserving the art of traditional Palestinian embroidery and stained glass drawing.` },
+          { label: 'Archive Frame 03', caption: `A young musician plays the oud while sitting in a damaged classroom. It serves as a poignant expression of resilience and national identity, underscored by the sentiment that despite difficult circumstances, the commitment to one’s homeland remains constant.` } ],
+        btn: 'Continue this journey' },
+      { type: 'reflect', kicker: 'A moment of reflection', title: 'What did Roshdi make visible?', years: '2018 – 2022', chapter: 2, label: 'Look beyond the images', paras: [
+          `Roshdi Sarraj’s work reveals that the consequences of war extend far beyond physical destruction and loss of life. A student’s struggle to pursue education reflects how restrictions on movement can deny individuals opportunities and control over their futures. Destroyed buildings represent more than damaged infrastructure; they signify the loss of homes, memories, and spaces where communities once lived and belonged.`,
+          `By documenting Palestinian art, culture, and everyday aspirations, Roshdi challenged the tendency to portray Palestinians solely as victims of conflict. His films remind us that behind every image of suffering are individuals with identities, dreams, and lives beyond war.` ],
+        btn: 'Continue this journey' },
+      { type: 'death', date: '22 October 2023', chapter: 3, paras: [
+          `On the morning of October 22, 2023, Roshdi’s family was having breakfast when an Israeli missile struck the house, killing Roshdi on the spot. He shielded his wife, Shuruq Al-Ayla, and their one-year-old daughter Dania, who both survived, but Roshdi succumbed to his wounds before he could be carried to the hospital.`,
+          `Reports later indicated that the IDF alleged Sarraj was connected to militant activity or listed on operational/terror-related tracking, though independent broadcasters like ABC investigated these claims and noted a lack of publicly verified independent evidence to confirm Roshdi functioned as a combatant.` ],
+        label: 'Beyond the individual loss',
+        text: `The death of a journalist is not only a personal loss. It also ends the possibility of their future reporting, relationships and unique perspective. This does not mean nobody else can report: it means something particular can no longer be replicated.`,
+        btn: 'What happened to the stories?' },
+      { type: 'timeline', chapter: 4, title: 'One timeline ends, & the other continues.',
+        left: { name: 'Roshdi Sarraj', items: [
+          { date: '2012', text: 'Co-founds Ain Media and builds a career in visual reporting.' },
+          { date: '2018 – 2022', text: 'Produces films about everyday life and the consequences of conflict.' },
+          { date: 'October 2023', text: 'Killed. His reporting ends.', hot: true } ] },
+        right: { name: 'The community', items: [
+          { date: 'Before 2023', text: 'Communities share stories of daily life, culture and displacement.' },
+          { date: 'October 2023', text: 'War and displacement intensify.', hot: true },
+          { date: 'After Roshdi’s death', text: 'Roshdi’s wife Shuruq Al-Ayla continues the work of Ain Media.' } ] },
+        label: 'What happened to the stories?',
+        text: `Roshdi’s death meant losing an experienced journalist whose connections with international media helped bring Palestinian stories to a global audience. Although Ain Media’s work continued, his absence potentially created gaps in the coverage of everyday Palestinian experiences and stories that might otherwise have remained unheard.<br><br><strong>His death did not end the stories of Palestinians, but it ended his ability to tell them.</strong>`,
+        btn: 'Complete this witness’s journey' }
+    ]
+  },
+  {
+    id: 'fatma', name: 'Fatma Hassona', short: 'Fatma Hassona', role: 'Photojournalist',
+    focus: 'Culture, memory & everyday life', archive: 'Archive 02',
+    sections: [
+      { type: 'profile', years: '2023 – 2025', chapter: 1, paras: [
+          `Fatma Hassona was a Palestinian photojournalist whose images and reflections recorded life in Gaza during the war. She contributed to outlets including Untold Palestine and Mondoweiss and appeared in Sepideh Farsi’s documentary <em>Put Your Soul on Your Hand and Walk</em>.`,
+          `Her work preserved cultural spaces, friendships, art and everyday moments amid displacement and destruction. She also prepared a photo diary combining photographs with her personal observations of a changing Gaza.` ],
+        focus: `Hassona documented Palestinian family life, cultural spaces, memories and destruction of familiar places.`,
+        why: `Hassona’s photographs make an important distinction: recording suffering is not the same as reducing people to their suffering. Toys, art and familiar public spaces become evidence of lives, relationships and cultural memory that war threatens to erase.`,
+        btn: 'Follow their work' },
+      { type: 'gallery', kicker: 'A moment of reflection', title: 'What did Hassona make visible?', years: '2023 – 2025', chapter: 2, layout: 'rows',
+        intro: `Hassona’s documentation in her photo diary.`,
+        frames: [
+          { label: 'Archive Frame 01', title: '“Colour in the dust, the toy stall”', caption: `This picture illustrates a stall filled with colourful children’s toys standing in stark contrast to devastation and death – a bold defiance of oppression. There will still be hope for a better future.` },
+          { label: 'Archive Frame 02', title: '“The Unforgotten Artist, Mahasen”', caption: `This picture illustrates an artist and Hassona’s good friend, Mahasen Al-Khatib, who was killed in an airstrike. She drew beautiful pictures, using them as her voice and the voice of the Palestinians speaking to the world.` },
+          { label: 'Archive Frame 03', title: '“A stadium of families”', caption: `This picture illustrates the Yarmouk Stadium, which has been turned into a camp for the displaced, for families forced to flee their homes as they have been destroyed or risk being targeted within days. Before, it was a place filled with the cheers of crowds as they watched football matches.` } ],
+        reflect: { label: 'Look beyond the images', text: `Hassona’s photographs reveal how the genocide in Gaza has disrupted not only Palestinian lives, but also the places, memories, and cultural identities that shape them. Yet, amid the destruction, her images also capture the resilience of Palestinians striving to preserve a sense of normalcy. Toys, art, and familiar spaces become reminders of the lives people once led and the futures they continue to hope for. Her photographs challenge us to look beyond death and injury, recognising that the loss extends to homes, childhoods, cultural expression, and a sense of belonging. By documenting these ordinary aspects of Palestinian life, Hassona reminds us that Palestinians are not merely victims of suffering, but individuals with identities, aspirations, and stories worth remembering.` },
+        btn: 'Continue this journey' },
+      { type: 'death', date: '16 April 2025', chapter: 3, paras: [
+          `Hassona was killed in an Israeli airstrike on her home in the Al-Tuffah neighbourhood, east of Gaza City, before dawn on April 16, 2025.`,
+          `One day before her death, her photo diary for Plan International was published, and it was announced that the documentary by Iranian director Sepideh Farsi, <em>Put Your Soul on Your Hand and Walk</em>, in which she was prominently featured, would be screened at Cannes.`,
+          `The Israeli military stated that the strike targeted a Hamas operative allegedly involved in attacks against Israeli soldiers and civilians. However, the public statements did not establish that Hassona was the intended target.` ],
+        label: 'Beyond the individual loss',
+        text: `Hassona’s death represents more than the loss of a journalist. It marks the loss of a unique perspective that documented Palestinian culture, memories and everyday life beyond the violence of war.<br><br>While her photographs and documentary continue preserving these experiences, her death ended her ability to capture the changing lives and cultural identities of Palestinians. The ordinary moments she might have documented remain unknown.<br><br>Her absence reminds us that preserving cultural memory depends not only on the images left behind, but also on those who continue documenting the lives unfolding beyond them.`,
+        btn: 'What happened to the stories?' },
+      { type: 'timeline', chapter: 4, title: 'One timeline ends, & the other continues.',
+        left: { name: 'Fatma Hassona', items: [
+          { date: '2023 – 2025', text: 'Photographs everyday life and displacement.' },
+          { date: '15 April 2025', text: 'Her photo diary is approved for publication.' },
+          { date: '16 April 2025', text: 'Killed. Her future photographs remain untaken.', hot: true } ] },
+        right: { name: 'The community', items: [
+          { date: 'During the war', text: 'Homes and cultural spaces were destroyed.' },
+          { date: 'After her death', text: 'Her photo diary and filmed conversations preserve her perspective. Audiences continue encountering her work.', hot: true } ] },
+        label: 'What happened to the stories?',
+        text: `Although Fatma’s photographs and filmed conversations remain accessible, they preserve only the stories she was able to tell. Her death means the loss of a unique perspective on Palestinian life, culture, and identity, leaving countless everyday moments and untold stories undocumented through her lens.`,
+        btn: 'Complete this witness’s journey' }
+    ]
+  },
+  {
+    id: 'saleh', name: 'Saleh Al-Jafarawi', short: 'Saleh Al-Jafarawi', role: 'Citizen journalist',
+    focus: 'Civilian suffering & digital witnessing', archive: 'Archive 03',
+    sections: [
+      { type: 'profile', years: '2018 – 2025', chapter: 1, paras: [
+          `Saleh was a Palestinian citizen journalist and social media influencer. In 2018, he began his career as an independent photographer and citizen journalist. By 2023, he had gained a massive social following: over 10 million followers on Instagram (before initial removal), and millions on TikTok and YouTube. He reported the frontlines of the Gaza genocide through his videos. He worked as a freelance photographer and journalist on social media platforms, documenting the suffering and destruction of civilians since 2018.` ],
+        focus: `He documented the aftermath of an airstrike, civilian rescue efforts, mass displacement of families, the conditions inside tent camps, and the aftermath of the ceasefire.`,
+        why: `Al-Jafarawi showed the mainstream world Palestinian suffering. His case reveals the active censoring of journalists online. This should raise concerns about who controls the narrative in history through the accessibility of information. Unlike physical violence, digital silencing can threaten the visibility of stories that have already been documented. Is the free press really free?`,
+        btn: 'Follow their work' },
+      { type: 'gallery', kicker: 'A moment of reflection', title: 'What did Saleh make visible?', years: '2018 – 2025', chapter: 2, layout: 'cols',
+        frames: [
+          { label: 'Archive Frame 01', caption: `A 9-year-old boy from Gaza with a plastic tube instead of a prosthetic limb, which could not be obtained.` },
+          { label: 'Archive Frame 02', caption: `Funeral prayers being held for a father, his three children, and his wife.` },
+          { label: 'Archive Frame 03', caption: `A doctor performing surgery on an injured patient using the light from mobile phone flashlights at Al-Shifa Medical Complex in Gaza.` },
+          { label: 'Archive Frame 04', caption: `Students have lost access to their classrooms after schools were reduced to rubble or turned into shelters for displaced people.` } ],
+        reflect: { label: 'Look beyond the images', text: `Saleh shows how the genocide in Gaza has changed life for Palestinians. Destroyed schools and lack of medical equipment mean the harm goes beyond death and injury: people can no longer learn, heal, or live with dignity. Yet his images also capture Palestinians’ courage for survival. A plastic tube used as a prosthetic and a phone flashlight standing in for surgical lighting show their determination to adapt and survive under severe constraints.` },
+        btn: 'Continue this journey' },
+      { type: 'death', date: '12 October 2025', chapter: 3, paras: [
+          `Saleh was shot and killed on October 12, 2025, shortly after the ceasefire was breached by Israel.`,
+          `Saleh was wearing the “Press” helmet and flak jacket. He was targeted and shot multiple times. His death signified that international rules of journalistic immunity no longer work, making the “Press” attire an actual target rather than a shield.`,
+          `Pro-Israel influencers falsely claimed his videos were faked and “Pallywood.” Instagram suspended his account in March 2025, forcing him to use another account. After his death, Instagram removed his account completely, which had 4.5 million followers. He was placed on a “red notice” target list by Israeli security commentators. He faced multiple attacks by official Israeli social media accounts such as the Israel Ministry of Foreign Affairs (MFA) official X account.` ],
+        label: 'Beyond the individual loss',
+        text: `Saleh’s death shows how exposed journalists in Gaza are: even clearly marked “PRESS” helmets and vests do not protect them, it makes them a <strong class="text-coral">target</strong>. Silencing goes beyond physical violence into digital spaces, through online threats and the removal of social media accounts. Millions of followers lost access to his documentation of Palestinian suffering and fundraising support. The IDF killed more than a man that day, they killed the voice that spoke to millions.`,
+        btn: 'What happened to the stories?' },
+      { type: 'timeline', chapter: 4, title: 'One timeline ends, & the other continues.',
+        left: { name: 'Saleh Al-Jafarawi', items: [
+          { date: '2018', text: 'Started his career as an independent photographer and citizen journalist.' },
+          { date: '2023 – 2025', text: 'Gained a massive social media following. Continued documenting the suffering of civilians. Used his platform for fundraising campaigns to reconstruct a children’s hospital.' },
+          { date: '12 October 2025', text: 'Shot and killed while wearing the “Press” helmet and flak jacket.', hot: true } ] },
+        right: { name: 'The community', items: [
+          { date: '2023 – 2025', text: 'Ongoing genocide with mass casualties, civilian loss, and destruction of infrastructure.' },
+          { date: 'After his death', text: 'Despite Meta’s permanent removal of his account, his digital legacy lives on through archival footage preserved and shared by supporters and backup accounts across other platforms.', hot: true } ] },
+        label: 'What happened to the stories?',
+        text: `Saleh’s death marks the loss of a witness whose documentation reached millions worldwide.<br><br>His absence reminds us that silencing a journalist does not only prevent future stories from being told, but can also threaten the survival of stories already documented.`,
+        btn: 'Complete this witness’s journey' }
+    ]
+  },
+  {
+    id: 'mariam', name: 'Mariam Abu Dagga', short: 'Mariam Abu Dagga', role: 'Visual journalist',
+    focus: 'Hospitals, children & healthcare workers', archive: 'Archive 04',
+    sections: [
+      { type: 'profile', years: '2015 – 2025', chapter: 1, paras: [
+          `Mariam Abu Dagga was a Palestinian freelance photojournalist who began her career in 2015. She worked with international outlets including the Associated Press and Independent Arabia. During the genocide, she documented civilian deaths, displacement, families searching for food and hospital conditions.`,
+          `Through her lens, humanitarian suffering became more than statistics. Her photographs gave visibility to the individuals and families experiencing the crisis.` ],
+        focus: `Her photographs focused particularly on malnourished children, overwhelmed hospitals, displaced families and healthcare workers struggling to provide treatment.`,
+        why: `Mariam’s journalism offered a crucial window into the devastating impact of the genocide in Gaza on its healthcare system. By documenting overwhelmed hospitals, exhausted healthcare workers, and patients struggling to access treatment, she revealed the human suffering behind the growing healthcare crisis.`,
+        btn: 'Follow their work' },
+      { type: 'gallery', kicker: 'A moment of reflection', title: 'What did she make visible?', chapter: 2, layout: 'grid',
+        frames: Array.from({ length: 12 }, (_, i) => ({ label: `Photo ${i + 1}`, caption: '' })),
+        btn: 'Continue this journey' },
+      { type: 'reflect', kicker: 'A moment of reflection', title: 'What did she make visible?', chapter: 2, label: 'Look beyond the images', paras: [
+          `Malnourished children, a man tending to his own wounds, and overcrowded hospital wards. Mariam’s photographs reveal the devastating toll of the genocide in Gaza on both patients and healthcare workers. Beyond the visible suffering, these images reflect a healthcare system struggling with damaged infrastructure, severe shortages of medical supplies, and overwhelming demand for treatment.`,
+          `Yet, amid these conditions, healthcare workers continue to provide care despite being victims of the same crisis. Their resilience reveals both their commitment to saving lives and the immense burden placed upon them.`,
+          `These photographs do more than document a healthcare crisis. They raise questions about what happens when the very institutions meant to preserve life become places of suffering and struggle. They also draw attention to the protections afforded to medical personnel and facilities under international humanitarian law, and the consequences when those protections are violated.` ],
+        btn: 'Continue this journey' },
+      { type: 'death', date: '25 August 2025', chapter: 3, kicker: 'The frame goes dark', paras: [
+          `Mariam Abu Dagga was killed alongside four other journalists during two Israeli strikes on Nasser Hospital in Gaza.`,
+          `The hospital staircase was a known gathering point for journalists, and the Associated Press had previously informed the Israeli military of its reporting presence.`,
+          `The Israeli military claimed it was targeting a camera allegedly used by Hamas for surveillance. However, Reuters identified the camera as its own broadcasting equipment.`,
+          `The first strike killed Reuters cameraman Hussam al-Masri. A second strike hit as journalists and rescue workers responded, killing Mariam and others.`,
+          `CPJ classified her killing as murder under its methodology, while the Israeli military denied intentionally targeting journalists.` ],
+        label: 'Beyond the individual loss',
+        text: `Mariam’s death represents more than the loss of an individual journalist. It also means the loss of a witness who documented the struggles of Gaza’s healthcare system. Without her reporting, the world loses a vital perspective on how hospitals, healthcare workers, and patients continue to cope amid the genocide.`,
+        btn: 'What happened to the stories?' },
+      { type: 'timeline', chapter: 4, title: 'One timeline ends, & the other continues.',
+        left: { name: 'Mariam Abu Dagga', items: [
+          { date: '2015', text: 'Began her career as a freelance photojournalist, working with international outlets including AP and Independent Arabia.' },
+          { date: '2023 – 2025', text: 'Documented Gaza’s humanitarian crisis, particularly malnourished children, overcrowded hospitals and healthcare workers struggling to provide treatment.' },
+          { date: '25 August 2025', text: 'Killed during Israeli strikes on Nasser Hospital alongside four other journalists. Her reporting ends here.', hot: true } ] },
+        right: { name: 'The community', items: [
+          { date: '2023 – 2025', text: 'War and displacement intensify, while food insecurity and medical shortages place increasing pressure on civilians and hospitals.' },
+          { date: 'August 2025', text: 'Malnourished children and injured patients continue seeking treatment at overcrowded hospitals.', hot: true },
+          { date: 'After Mariam’s death', text: 'The humanitarian crisis continues. Other journalists document the attack and continue reporting on patients and families affected by the war.' } ] },
+        label: 'What happened to the stories?',
+        text: `While Mariam’s death marks the loss of a vital witness, the suffering she documented does not end with her. Hospitals continue to face immense pressure, and patients and healthcare workers continue to endure the consequences of the genocide in Gaza. Although her voice has been silenced, her photographs remain as lasting records of human suffering, preserving evidence of the healthcare crisis, the devastating loss of life, and the inadequacy of humanitarian relief.`,
+        btn: 'Complete this witness’s journey' }
+    ]
+  },
+  {
+    id: 'shadi', name: 'Shadi Abu Sido', short: 'Shadi Abu Sido', role: 'Photojournalist & camera operator',
+    focus: 'Humanitarian consequences of war', archive: 'Archive 05',
+    sections: [
+      { type: 'profile', years: '', chapter: 1, subtitle: 'Silenced Without Death', paras: [
+          `Shadi Abu Sido is a Palestinian photojournalist and camera operator for Palestine Today. Through visual reporting, he documented the humanitarian consequences of the Gaza war, particularly the experiences of civilians affected by Israeli military operations.`,
+          `His work helped preserve firsthand visual accounts of the conflict, giving visibility to the suffering and everyday realities of affected communities. On 18 March 2024, he was detained during an Israeli military raid on Al-Shifa Medical Complex while on a reporting assignment. He was held without charge or trial for approximately 19 months across several detention facilities. Shadi also recounted threats by Israeli soldiers intended to prevent him from ever operating a camera again. He was eventually released in October 2025 as part of a ceasefire and prisoner exchange agreement.` ],
+        why: `Shadi’s imprisonment reminds us that death is not the only form of silencing. Through detention, alleged torture, abuse and threats, he was deprived not only of his freedom but of his ability to document the realities of Palestinian lives.`,
+        btn: 'Follow their work' },
+      { type: 'timeline', chapter: 2, title: 'One timeline ends, & the other continues.', heading2: '18 March 2024 – October 2025',
+        left: { name: 'Shadi Abu Sido', items: [
+          { date: 'Before March 2024', text: 'Works as a camera operator for Palestine Today, documenting the humanitarian consequences of war.' },
+          { date: '18 March 2024', text: 'Detained during an Israeli military raid at Al-Shifa Medical Complex while on a reporting assignment.' },
+          { date: 'March 2024 – October 2025', text: 'Held without charge or trial for approximately 19 months, preventing him from continuing his reporting.', hot: true },
+          { date: 'October 2025', text: 'Released from detention but reports lasting vision problems, injuries and threats affecting his ability to return to journalism.' } ] },
+        right: { name: 'The community', items: [
+          { date: 'Before March 2024', text: 'Civilians in Gaza experience bombardment, displacement and growing humanitarian hardship.' },
+          { date: 'March 2024 – October 2025', text: 'The war and humanitarian crisis continue while Shadi remains unable to document events.', hot: true },
+          { date: 'After Shadi’s release', text: 'Palestinian communities continue facing the consequences of war, while Shadi’s reported injuries and threats hinder his ability to resume documenting their experiences.' } ] },
+        label: 'Beyond individual suffering',
+        text: `The silencing of Shadi extends beyond his personal suffering. His imprisonment disrupts his ability to report, build relationships, and document Palestinian experiences through his unique perspective. The reported threats against Shadi also raise troubling questions about efforts to suppress journalism and prevent accounts of human suffering from reaching the world. When a journalist is silenced, it is not only their voice that is lost, but also the stories that may never be told.`,
+        btn: 'What happened to the stories?' },
+      { type: 'video', kicker: 'A moment of reflection', title: 'When the witness becomes the story.', chapter: 3, videoId: 'shadi-release',
+        text: `Before his detention, Shadi Abu Sido documented the experiences of civilians affected by war. After approximately 19 months in detention, his release and reunion with loved ones became a story captured by others.`,
+        btn: 'Continue this journey' },
+      { type: 'reflect', kicker: 'A moment of reflection', title: 'When the witness becomes the story.', chapter: 4, label: 'The significance behind Shadi’s silencing', paras: [
+          `Following his release in October 2025, Shadi recounted the severe physical and psychological abuse he reportedly endured during detention, including beatings, sleep deprivation, prolonged kneeling, exposure to deafening sounds, and suspension by his arms. These experiences left him with lasting injuries, including impaired vision, and psychological trauma that hindered his return to journalism. He also reported being threatened with renewed arrest or death by an Israeli intelligence officer if he resumed reporting.`,
+          `Shadi’s testimony reveals how silencing can extend beyond imprisonment, as intimidation and lasting trauma can continue to suppress a journalist’s voice even after their release. By speaking out, he also offers a rare glimpse into the experiences of Palestinian detainees whose suffering may otherwise remain undocumented. His account raises serious concerns about the treatment of detainees and the use of violence and intimidation to suppress journalism. His story reminds us that freedom from detention does not necessarily mean freedom from silencing.` ],
+        btn: 'Complete this witness’s journey' }
+    ]
+  }
+];
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+/** Image slot: placeholder is always rendered; <img> covers it if the file exists. */
+const imgBox = (file, label, cls = '') =>
+  `<div class="media ${cls}"><span class="ph">${label}</span><img src="${ASSETS_IMG}${file}" alt="${label}" loading="lazy" onerror="this.remove()"></div>`;
+
+/** Video slot: plays on hover (desktop) or tap (touch). Drop files in /assets/videos/<id>.mp4 (+ optional .webm). */
+const videoBox = (id, label, cls = '') =>
+  `<div class="media vidbox ${cls}" data-hover-video>
+     <span class="ph">${label}<br>(${ASSETS_VID}${id}.mp4)</span>
+     <video muted loop playsinline preload="metadata" poster="${ASSETS_IMG}${id}.jpg">
+       <source src="${ASSETS_VID}${id}.mp4" type="video/mp4">
+       <source src="${ASSETS_VID}${id}.webm" type="video/webm">
+     </video>
+   </div>`;
+
+/** Picker card: portrait shows by default; <id>-hover.mp4 plays over it on hover (tap on touch). */
+const hoverBox = (w, cls = '') =>
+  `<div class="media vidbox hovercard ${cls}" data-hover-video>
+     <span class="ph">${w.name}</span>
+     <img src="${ASSETS_IMG}${w.id}-portrait.jpg" alt="${w.name}" loading="lazy" onerror="this.remove()" style="object-position:${PORTRAIT_POS[w.id] || 'center'}">
+     <video muted loop playsinline preload="auto">
+       <source src="${ASSETS_VID}${w.id}-hover.mp4" type="video/mp4">
+       <source src="${ASSETS_VID}${w.id}-hover.webm" type="video/webm">
+     </video>
+   </div>`;
+
+const chapterPill = (n, years) => `
+  <div class="flex items-center gap-3 shrink-0">${years ? `<span class="font-serif text-neutral-400 hidden sm:inline">${years}</span>` : ''}<span class="pill">CHAPTER ${n}/4</span></div>`;
+
+const nextBtn = (text, target, extra = '') =>
+  `<button data-goto="${target}" ${extra} class="btn">${text} →</button>`;
+
+/* =====================================================================
+   SECTION TEMPLATES
+   ===================================================================== */
+const T = {
+  profile: (w, s, id, next) => `
+    <div class="grid lg:grid-cols-[1fr_340px] gap-10">
+      <div>
+        <p class="label">Meet the person behind the camera</p>
+        <h2 class="font-serif text-5xl md:text-6xl mt-3">${w.name}</h2>
+        ${s.subtitle ? `<p class="italic mt-3 text-lg">${s.subtitle}</p>` : ''}
+        <div class="mt-6 space-y-5 text-lg leading-relaxed max-w-3xl">${s.paras.map(p => `<p>${p}</p>`).join('')}</div>
+        ${s.focus ? `<p class="label mt-8">Their reporting focus</p><p class="mt-2 text-lg max-w-3xl">${s.focus}</p>` : ''}
+        <div class="box mt-8 max-w-3xl"><p class="label mb-2">Why this witness matters</p><p>${s.why}</p></div>
+      </div>
+      <div class="flex flex-col justify-between gap-8">
+        ${imgBox(`${w.id}-portrait.jpg`, `Portrait: ${w.name}`, 'aspect-[3/4] w-full')}
+        <div class="lg:text-right">${nextBtn(s.btn, next)}</div>
+      </div>
+    </div>`,
+
+  gallery: (w, s, id, next) => {
+    const grid = s.layout === 'grid';
+    const rows = s.layout === 'rows';
+    const frames = s.frames.map((f, i) => {
+      const file = `${w.id}-frame-${i + 1}`;
+      const media = f.video ? videoBox(file, f.label, 'aspect-[4/3] w-full') : imgBox(`${file}.jpg`, f.label, grid ? 'aspect-square rounded-2xl' : 'aspect-[4/3] w-full');
+      if (grid) return media;
+      if (rows) return `<div class="grid sm:grid-cols-[260px_1fr] gap-5 items-start"><div><p class="text-[10px] tracking-widest text-neutral-500 mb-1 uppercase">${f.label}</p>${media}</div><div><p class="italic font-bold text-xl">${f.title}</p><p class="mt-2 text-lg text-neutral-200">${f.caption}</p></div></div>`;
+      return `<figure><p class="text-[10px] tracking-widest text-neutral-500 mb-1 uppercase">${f.label}</p>${media}<figcaption class="mt-3 text-sm text-neutral-200">${f.caption}</figcaption></figure>`;
+    }).join('');
+    const wrap = grid ? 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3' : rows ? 'space-y-8' : `grid sm:grid-cols-2 ${s.frames.length > 3 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6`;
+    return `
+      <p class="label">${s.kicker}</p>
+      <h2 class="font-serif text-4xl md:text-5xl mt-3">${s.title}</h2>
+      ${s.intro ? `<p class="mt-4 max-w-4xl text-lg text-neutral-200">${s.intro}</p>` : ''}
+      <div class="${wrap} mt-8">${frames}</div>
+      ${s.reflect ? `<div class="box mt-10 max-w-4xl"><p class="label mb-2">${s.reflect.label}</p><p>${s.reflect.text}</p></div>` : ''}
+      <div class="mt-10">${nextBtn(s.btn, next)}</div>`;
+  },
+
+  reflect: (w, s, id, next) => `
+    <p class="label">${s.kicker}</p>
+    <h2 class="font-serif text-4xl md:text-5xl mt-3">${s.title}</h2>
+    <div class="box mt-8 max-w-5xl space-y-5 text-lg"><p class="label">${s.label}</p>${s.paras.map(p => `<p>${p}</p>`).join('')}</div>
+    <div class="mt-10">${nextBtn(s.btn, next)}</div>`,
+
+  death: (w, s, id, next) => `
+    <p class="font-serif text-4xl md:text-5xl text-coral">${s.date}</p>
+    <p class="label mt-2">The frame goes dark</p>
+    <div class="grid lg:grid-cols-[1.3fr_1fr] gap-10 mt-8">
+      <div class="space-y-5 text-lg leading-relaxed">${s.paras.map(p => `<p>${p}</p>`).join('')}</div>
+      <div class="flex flex-col gap-8 justify-between">
+        <div class="box"><p class="label mb-2">${s.label}</p><p>${s.text}</p></div>
+        <div>${nextBtn(s.btn, next)}</div>
+      </div>
+    </div>`,
+
+  timeline: (w, s, id, next) => {
+    const col = c => `<div><h3 class="font-serif text-2xl mb-6">${c.name}</h3><ol class="tl">${c.items.map(it => `<li class="${it.hot ? 'hot' : ''}"><span class="dot"></span><p class="tl-date">${it.date}</p><p>${it.text}</p></li>`).join('')}</ol></div>`;
+    const complete = next.endsWith('-done') ? `data-complete="${w.id}"` : '';
+    return `
+      <h2 class="font-serif text-3xl md:text-5xl"><span class="text-coral">One timeline ends,</span> &amp; the other continues.</h2>
+      ${s.heading2 ? `<p class="font-serif text-3xl md:text-4xl mt-4">${s.heading2}</p>` : ''}
+      <div class="grid lg:grid-cols-[1fr_1fr_320px] gap-10 mt-10">
+        ${col(s.left)}${col(s.right)}
+        <div class="flex flex-col gap-8 justify-between">
+          <div class="box"><p class="label mb-3">${s.label}</p><p>${s.text}</p></div>
+          <div>${nextBtn(s.btn, next, complete)}</div>
+        </div>
+      </div>`;
+  },
+
+  video: (w, s, id, next) => `
+    <p class="label">${s.kicker}</p>
+    <h2 class="font-serif text-4xl md:text-5xl mt-3">${s.title}</h2>
+    <div class="grid lg:grid-cols-[1.6fr_1fr] gap-10 mt-8 items-start">
+      ${videoBox(s.videoId, 'Video: Shadi Abu Sido’s release', 'aspect-video w-full')}
+      <div><p class="text-xl leading-relaxed">${s.text}</p><div class="mt-8">${nextBtn(s.btn, next)}</div></div>
+    </div>`
+};
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function render() {
+  // Witness picker cards
+  $('#cards').innerHTML = WITNESSES.map(w => `
+    <article class="w-full sm:w-[calc(50%-.5rem)] lg:w-[calc(33.333%-.75rem)] border border-white/15 bg-white/[.03] p-3 flex flex-col">
+      ${hoverBox(w, 'aspect-[4/3] w-full')}
+      <p class="text-[10px] tracking-widest text-coral mt-3">● REC &nbsp; <span class="text-neutral-500">${w.archive.toUpperCase()}</span></p>
+      <h3 class="font-serif text-2xl mt-1">${w.name}</h3>
+      <p class="label mt-1">${w.role}</p>
+      <p class="text-sm text-neutral-300 mt-2 flex-1">${w.focus}</p>
+      <button data-goto="${w.id}-s0" class="mt-4 text-left text-xs tracking-widest text-gold hover:text-white uppercase">Follow this witness ⟶ <span data-badge="${w.id}" class="hidden ml-2 text-coral">✓ completed</span></button>
+    </article>`).join('');
+
+  // Journeys
+  $('#journeys').innerHTML = WITNESSES.map((w, wi) => {
+    const secs = w.sections.map((s, i) => {
+      const id = `${w.id}-s${i}`;
+      const next = i < w.sections.length - 1 ? `${w.id}-s${i + 1}` : `${w.id}-done`;
+      const dark = s.type === 'death';
+      return `<section id="${id}" class="border-t border-white/10">
+        <div class="divider ${dark ? 'hot' : ''}"></div>
+        <div class="px-6 md:px-16 lg:px-24 py-16 md:py-24 reveal">
+          <div class="flex justify-between items-start gap-4 mb-6"><span class="label">${w.name}</span>${chapterPill(s.chapter, s.years)}</div>
+          ${T[s.type](w, s, id, next)}
+        </div></section>`;
+    }).join('');
+
+    const nextW = WITNESSES[wi + 1];
+    const done = `<section id="${w.id}-done" class="border-t border-white/10 px-6 py-24 text-center reveal">
+      <p class="label">A witness remembered</p>
+      <h2 class="font-serif text-5xl md:text-6xl mt-4">${w.name}</h2>
+      <p class="text-neutral-400 mt-5 max-w-2xl mx-auto">You have explored the work they did, the interruption they faced, and the voices connected to their reporting.</p>
+      <p class="font-serif text-6xl text-gold mt-10"><span class="js-count">0</span> / 5</p>
+      <p class="text-neutral-400 mt-2">Journeys completed</p>
+      <div class="mt-10 flex flex-wrap gap-4 justify-center">
+        ${nextW ? `<button data-goto="${nextW.id}-s0" class="btn">Explore ${nextW.short} →</button>` : ''}
+        <button data-goto="witnesses" class="btn-ghost">Choose a witness</button>
+        <button data-goto="aftermath" class="${nextW ? 'btn-ghost' : 'btn'}">Collective aftermath →</button>
+      </div></section>`;
+    return secs + done;
+  }).join('');
+
+  // Collective strip (portraits)
+  $('#strip').innerHTML = WITNESSES.map(w => imgBox(`${w.id}-portrait.jpg`, w.name, 'aspect-[3/4] w-full')).join('');
+}
+
+/* =====================================================================
+   PROGRESS (journeys completed) — persisted in localStorage when available
+   ===================================================================== */
+let done = new Set();
+try { done = new Set(JSON.parse(localStorage.getItem('lw-done') || '[]')); } catch (e) {}
+
+function updateProgress() {
+  $$('.js-count').forEach(el => el.textContent = done.size);
+  $$('.js-remaining').forEach(el => el.textContent = 5 - done.size);
+  WITNESSES.forEach(w => $(`[data-badge="${w.id}"]`)?.classList.toggle('hidden', !done.has(w.id)));
+  $('#final').classList.toggle('locked', GATE_FINAL && done.size < 5);
+}
+function markDone(id) {
+  done.add(id);
+  try { localStorage.setItem('lw-done', JSON.stringify([...done])); } catch (e) {}
+  updateProgress();
+}
+
+/* =====================================================================
+   NAVIGATION — every [data-goto] button/link smooth-scrolls to an internal id
+   ===================================================================== */
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-goto]');
+  if (btn) {
+    e.preventDefault();
+    // Any button that leads to a "<witness>-done" screen completes that witness's journey,
+    // whatever type the last chapter is (timeline, reflection, video...).
+    const doneMatch = /^(.+)-done$/.exec(btn.dataset.goto);
+    if (doneMatch) markDone(doneMatch[1]);
+    const target = document.getElementById(btn.dataset.goto);
+    if (target) {
+      target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + btn.dataset.goto);
+    }
+    return;
+  }
+  // Lightbox: any picture inside a .media frame opens uncropped. (Picker cards on touch screens: a tap plays the video instead.)
+  const frame = e.target.closest('.media');
+  if (frame) {
+    const pic = $('img', frame);
+    const touchOnly = frame.hasAttribute('data-hover-video') && !matchMedia('(hover: hover)').matches;
+    if (pic && !touchOnly) { openLightbox(pic); return; }
+  }
+  const flip = e.target.closest('.flip');                   // Archive/01 flip cards
+  if (flip) { const on = flip.classList.toggle('flipped'); flip.setAttribute('aria-pressed', on); return; }
+  const card = e.target.closest('.reflect-card');           // click-to-reflect cards
+  if (card) { card.classList.toggle('open'); card.setAttribute('aria-expanded', card.classList.contains('open')); }
+});
+
+/* Lightbox open / close */
+const lb = document.getElementById('lightbox'), lbImg = document.getElementById('lightbox-img');
+function openLightbox(img) {
+  lbImg.src = img.currentSrc || img.src; lbImg.alt = img.alt || '';
+  lb.classList.add('open'); document.body.style.overflow = 'hidden';
+}
+function closeLightbox() { lb.classList.remove('open'); document.body.style.overflow = ''; lbImg.removeAttribute('src'); }
+lb.addEventListener('click', e => { if (e.target !== lbImg) closeLightbox(); });   // outside the image = close
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && lb.classList.contains('open')) closeLightbox(); });
+
+/* Keyboard support for flip cards (Enter / Space) */
+document.addEventListener('keydown', e => {
+  const flip = e.target.closest && e.target.closest('.flip');
+  if (flip && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); flip.click(); }
+});
+
+/* =====================================================================
+   VIDEO — hover to play (mouse), tap to toggle (touch). Pauses on leave.
+   If the file is missing, the placeholder stays visible and nothing breaks.
+   ===================================================================== */
+function initVideos() {
+  $$('[data-hover-video]').forEach(box => {
+    const v = $('video', box);
+    v.addEventListener('loadeddata', () => box.classList.add('ready'));
+    const play = () => v.play().then(() => box.classList.add('playing', 'started')).catch(() => {});
+    const stop = () => { v.pause(); box.classList.remove('playing'); };
+    box.addEventListener('mouseenter', play);
+    box.addEventListener('focusin', play);
+    if (box.classList.contains('hovercard')) {
+      // Picker cards: once started, the video keeps looping (no pause on mouse-leave, no click-to-stop).
+      box.addEventListener('click', play);
+      return;
+    }
+    box.addEventListener('mouseleave', stop);
+    box.addEventListener('click', () => v.paused ? play() : stop());   // touch devices
+    box.addEventListener('focusout', stop);
+  });
+}
+
+/* Fade sections in as they enter the viewport */
+function initReveal() {
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .08 });
+  $$('.reveal').forEach(el => io.observe(el));
+}
+
+render();
+updateProgress();
+initVideos();
+initReveal();
+</script>
+</body>
+</html>
