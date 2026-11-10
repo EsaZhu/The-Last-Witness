@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Last Witness — A Digital Memorial</title>
-  <meta name="description" content="What happens when the voice for the dead becomes the dead? A digital memorial to Palestinian journalists.">
+  <title>The Last Witness — A Digital Exhibition</title>
+  <meta name="description" content="What happens when the voice for the dead becomes the dead? A digital exhibition to Palestinian journalists.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -119,7 +119,7 @@
        ============================================================ -->
   <header id="hero" class="relative min-h-screen flex flex-col justify-center px-6 md:px-16 lg:px-24 overflow-hidden">
     <div class="absolute inset-0 opacity-[.06]" style="background:radial-gradient(circle at 70% 30%,#fff 0,transparent 55%)"></div>
-    <p class="label !text-coral relative">A Digital Memorial</p>
+    <p class="label !text-coral relative">A Digital Exhibition</p>
     <h1 class="relative font-serif text-6xl md:text-8xl leading-[1.05] mt-4">The Last<br><span class="italic text-coral">Witness.</span></h1>
     <p class="relative mt-6 text-lg text-neutral-300 max-w-xl">What happens when the voice for the dead becomes the dead?</p>
     <div class="relative mt-10">
@@ -286,13 +286,14 @@ const WITNESSES = [
       { type: 'gallery', kicker: 'The stories they made visible', title: 'What did Roshdi make visible?', years: '2018 – 2022', chapter: 2, layout: 'cols',
         intro: `Roshdi Sarraj and Ain Media made films showing Palestinian lives and struggles. Rather than only documenting Palestinian suffering, he also wanted the world to recognise Palestinian life, culture, and humanity even during the years of Israeli siege.`,
         frames: [
-          { label: 'Archive Frame 01', caption: `A woman who is part of Gaza’s boxing gym for women, which aims to empower women in sports.` },
+          { label: 'Archive Frame 01', caption: `A young musician plays the oud while sitting in a damaged classroom. It serves as a poignant expression of resilience and national identity, underscored by the sentiment that despite difficult circumstances, the commitment to one’s homeland remains constant.` },
           { label: 'Archive Frame 02', caption: `A woman preserving the art of traditional Palestinian embroidery and stained glass drawing.` },
-          { label: 'Archive Frame 03', caption: `A young musician plays the oud while sitting in a damaged classroom. It serves as a poignant expression of resilience and national identity, underscored by the sentiment that despite difficult circumstances, the commitment to one’s homeland remains constant.` } ],
+          { label: 'Archive Frame 03', caption: `A woman who is part of Gaza’s boxing gym for women, which aims to empower women in sports.` } ],
         btn: 'Continue this journey' },
       { type: 'reflect', kicker: 'A moment of reflection', title: 'What did Roshdi make visible?', years: '2018 – 2022', chapter: 2, label: 'Look beyond the images', paras: [
-          `Roshdi Sarraj’s work reveals that the consequences of war extend far beyond physical destruction and loss of life. A student’s struggle to pursue education reflects how restrictions on movement can deny individuals opportunities and control over their futures. Destroyed buildings represent more than damaged infrastructure; they signify the loss of homes, memories, and spaces where communities once lived and belonged.`,
-          `By documenting Palestinian art, culture, and everyday aspirations, Roshdi challenged the tendency to portray Palestinians solely as victims of conflict. His films remind us that behind every image of suffering are individuals with identities, dreams, and lives beyond war.` ],
+          `Beyond the destruction and suffering often associated with war, these photographs reveal another side of Palestinian life: one defined by creativity, cultural identity, and aspirations.`,
+          `A young musician playing the oud in a damaged classroom illustrates how artistic expression persists amid destruction. A woman preserving traditional Palestinian crafts reflects the importance of safeguarding cultural heritage and passing it on to future generations. Meanwhile, a female boxer challenges traditional gender expectations, demonstrating how Palestinian women continue to pursue empowerment and personal ambitions despite adversity.`,
+          `Through these stories, Roshdi Sarraj reminds us that Palestinians are more than victims of conflict. They are individuals with talents, traditions, and dreams worth recognising. His death represents not only the loss of a journalist, but also the loss of a perspective that made these often-overlooked dimensions of Palestinian life visible to the world.` ],
         btn: 'Continue this journey' },
       { type: 'death', date: '22 October 2023', chapter: 3, paras: [
           `On the morning of October 22, 2023, Roshdi’s family was having breakfast when an Israeli missile struck the house, killing Roshdi on the spot. He shielded his wife, Shuruq Al-Ayla, and their one-year-old daughter Dania, who both survived, but Roshdi succumbed to his wounds before he could be carried to the hospital.`,
@@ -359,7 +360,7 @@ const WITNESSES = [
       { type: 'profile', years: '2018 – 2025', chapter: 1, paras: [
           `Saleh was a Palestinian citizen journalist and social media influencer. In 2018, he began his career as an independent photographer and citizen journalist. By 2023, he had gained a massive social following: over 10 million followers on Instagram (before initial removal), and millions on TikTok and YouTube. He reported the frontlines of the Gaza genocide through his videos. He worked as a freelance photographer and journalist on social media platforms, documenting the suffering and destruction of civilians since 2018.` ],
         focus: `He documented the aftermath of an airstrike, civilian rescue efforts, mass displacement of families, the conditions inside tent camps, and the aftermath of the ceasefire.`,
-        why: `Al-Jafarawi showed the mainstream world Palestinian suffering. His case reveals the active censoring of journalists online. This should raise concerns about who controls the narrative in history through the accessibility of information. Unlike physical violence, digital silencing can threaten the visibility of stories that have already been documented. Is the free press really free?`,
+        why: `Saleh showed the mainstream world Palestinian suffering. His case reveals the active censoring of journalists online. This should raise concerns about who controls the narrative in history through the accessibility of information. Unlike physical violence, digital silencing can threaten the visibility of stories that have already been documented. Is the free press really free?`,
         btn: 'Follow their work' },
       { type: 'gallery', kicker: 'A moment of reflection', title: 'What did Saleh make visible?', years: '2018 – 2025', chapter: 2, layout: 'cols',
         frames: [
@@ -399,7 +400,7 @@ const WITNESSES = [
         focus: `Her photographs focused particularly on malnourished children, overwhelmed hospitals, displaced families and healthcare workers struggling to provide treatment.`,
         why: `Mariam’s journalism offered a crucial window into the devastating impact of the genocide in Gaza on its healthcare system. By documenting overwhelmed hospitals, exhausted healthcare workers, and patients struggling to access treatment, she revealed the human suffering behind the growing healthcare crisis.`,
         btn: 'Follow their work' },
-      { type: 'gallery', kicker: 'A moment of reflection', title: 'What did she make visible?', chapter: 2, layout: 'grid',
+      { type: 'gallery', kicker: 'Look beyond the images', title: 'What did she make visible?', chapter: 2, layout: 'grid',
         frames: Array.from({ length: 12 }, (_, i) => ({ label: `Photo ${i + 1}`, caption: '' })),
         btn: 'Continue this journey' },
       { type: 'reflect', kicker: 'A moment of reflection', title: 'What did she make visible?', chapter: 2, label: 'Look beyond the images', paras: [
