@@ -364,13 +364,13 @@ const WITNESSES = [
         btn: 'Follow their work' },
       { type: 'gallery', kicker: 'A moment of reflection', title: 'What did Saleh make visible?', years: '2018 – 2025', chapter: 2, layout: 'cols',
         frames: [
-          { label: 'Archive Frame 01', caption: `A 9-year-old boy from Gaza with a plastic tube instead of a prosthetic limb, which could not be obtained.` },
-          { label: 'Archive Frame 02', caption: `Funeral prayers being held for a father, his three children, and his wife.` },
-          { label: 'Archive Frame 03', caption: `A doctor performing surgery on an injured patient using the light from mobile phone flashlights at Al-Shifa Medical Complex in Gaza.` },
-          { label: 'Archive Frame 04', caption: `Students have lost access to their classrooms after schools were reduced to rubble or turned into shelters for displaced people.` } ],
-        reflect: { label: 'Look beyond the images', text: `Saleh shows how the genocide in Gaza has changed life for Palestinians. Destroyed schools and lack of medical equipment mean the harm goes beyond death and injury: people can no longer learn, heal, or live with dignity. Yet his images also capture Palestinians’ courage for survival. A plastic tube used as a prosthetic and a phone flashlight standing in for surgical lighting show their determination to adapt and survive under severe constraints.` },
+          { label: 'Archive Frame 01', video: true, caption: `A fly infestation and conditions inside the tents in Palestine for many families.` },
+          { label: 'Archive Frame 02', video: true, caption: `Two years into the genocide, Saleh compiles segments of society, young and old, women and men, conveying their voices to the whole world and showing how these two years have been for them.` },
+          { label: 'Archive Frame 03', video: true, caption: `The occupation directly targeted medical personnel with a shell as they were trying to evacuate a number of injured people near Al-Helou International Hospital in western Gaza City.` },
+          { label: 'Archive Frame 04', video: true, caption: `The child Ibrahim Abu Sharakh recounts what happened during the attack on the Shaath family’s home on Aidiya Street in Gaza City.` } ],
+        reflect: { label: 'Look beyond the videos', text: `Saleh shows how the genocide in Gaza has changed life for Palestinians. Destroyed schools and lack of medical equipment mean the harm goes beyond death and injury: people can no longer learn, heal, or live with dignity. Yet his images also capture Palestinians’ courage for survival. A plastic tube used as a prosthetic and a phone flashlight standing in for surgical lighting show their determination to adapt and survive under severe constraints.` },
         btn: 'Continue this journey' },
-      { type: 'death', date: '12 October 2025', chapter: 3, paras: [
+      { type: 'death', date: '12 October 2025', chapter: 3, videoId: 'saleh-death', boxLeft: true, paras: [
           `Saleh was shot and killed on October 12, 2025, shortly after the ceasefire was breached by Israel.`,
           `Saleh was wearing the “Press” helmet and flak jacket. He was targeted and shot multiple times. His death signified that international rules of journalistic immunity no longer work, making the “Press” attire an actual target rather than a shield.`,
           `Pro-Israel influencers falsely claimed his videos were faked and “Pallywood.” Instagram suspended his account in March 2025, forcing him to use another account. After his death, Instagram removed his account completely, which had 4.5 million followers. He was placed on a “red notice” target list by Israeli security commentators. He faced multiple attacks by official Israeli social media accounts such as the Israel Ministry of Foreign Affairs (MFA) official X account.` ],
@@ -547,16 +547,23 @@ const T = {
     <div class="box mt-8 max-w-5xl space-y-5 text-lg"><p class="label">${s.label}</p>${s.paras.map(p => `<p>${p}</p>`).join('')}</div>
     <div class="mt-10">${nextBtn(s.btn, next)}</div>`,
 
-  death: (w, s, id, next) => `
+  death: (w, s, id, next) => {
+    const box = `<div class="box"><p class="label mb-2">${s.label}</p><p>${s.text}</p></div>`;
+    return `
     <p class="font-serif text-4xl md:text-5xl text-coral">${s.date}</p>
     <p class="label mt-2">The frame goes dark</p>
     <div class="grid lg:grid-cols-[1.3fr_1fr] gap-10 mt-8">
-      <div class="space-y-5 text-lg leading-relaxed">${s.paras.map(p => `<p>${p}</p>`).join('')}</div>
+      <div class="space-y-5 text-lg leading-relaxed">
+        ${s.paras.map(p => `<p>${p}</p>`).join('')}
+        ${s.boxLeft ? box : ''}
+      </div>
       <div class="flex flex-col gap-8 justify-between">
-        <div class="box"><p class="label mb-2">${s.label}</p><p>${s.text}</p></div>
+        ${s.videoId ? videoBox(s.videoId, 'Video: ' + w.name, 'aspect-[3/4] w-full max-w-sm') : ''}
+        ${s.boxLeft ? '' : box}
         <div>${nextBtn(s.btn, next)}</div>
       </div>
-    </div>`,
+    </div>`;
+  },
 
   timeline: (w, s, id, next) => {
     const col = c => `<div><h3 class="font-serif text-2xl mb-6">${c.name}</h3><ol class="tl">${c.items.map(it => `<li class="${it.hot ? 'hot' : ''}"><span class="dot"></span><p class="tl-date">${it.date}</p><p>${it.text}</p></li>`).join('')}</ol></div>`;
